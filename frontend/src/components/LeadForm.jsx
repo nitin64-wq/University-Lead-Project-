@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { userService } from '../services/leadService';
 import styles from './LeadForm.module.css';
 
@@ -21,6 +22,9 @@ const initialState = {
     leadSource: '',
     assignedTo: '', status: 'New Lead', followUpDate: '',
 };
+
+const normalizeMobile = (value = '') => value.replace(/\D/g, '');
+const normalizeEmail = (value = '') => value.trim().toLowerCase();
 
 const LeadForm = ({ initial = {}, onSubmit, loading = false, isEdit = false }) => {
     const [form, setForm] = useState({ ...initialState, ...initial });
@@ -51,7 +55,28 @@ const LeadForm = ({ initial = {}, onSubmit, loading = false, isEdit = false }) =
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSubmit(form);
+
+        const mobileDigits = normalizeMobile(form.mobile);
+        if (mobileDigits.length !== 10) {
+            toast.error('Mobile number must be exactly 10 digits');
+            setActiveSection(1);
+            return;
+        }
+
+        const emailValue = normalizeEmail(form.email);
+        if (emailValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+            toast.error('Please enter a valid email address');
+            setActiveSection(1);
+            return;
+        }
+
+        onSubmit({
+            ...form,
+            mobile: mobileDigits,
+            alternateMobile: normalizeMobile(form.alternateMobile),
+            whatsapp: normalizeMobile(form.whatsapp),
+            email: emailValue,
+        });
     };
 
     const sections = [

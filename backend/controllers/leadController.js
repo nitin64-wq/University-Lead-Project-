@@ -2,6 +2,51 @@ const asyncHandler = require('express-async-handler');
 const Lead = require('../models/Lead');
 const LeadHistory = require('../models/LeadHistory');
 
+const normalizeMobile = (value = '') => value.replace(/\D/g, '');
+const normalizeEmail = (value = '') => value.trim().toLowerCase();
+
+const assertNoDuplicateLead = async ({ mobile, email, excludeLeadId }) => {
+    const duplicateFilters = [];
+
+    const normalizedMobile = normalizeMobile(mobile);
+    if (normalizedMobile) {
+        duplicateFilters.push({ mobile: normalizedMobile });
+    }
+
+    const normalizedEmail = normalizeEmail(email);
+    if (normalizedEmail) {
+        duplicateFilters.push({ email: normalizedEmail });
+    }
+
+    if (!duplicateFilters.length) return;
+
+    const query = {
+        $or: duplicateFilters,
+    };
+
+    if (excludeLeadId) {
+        query._id = { $ne: excludeLeadId };
+    }
+
+    const duplicateLead = await Lead.findOne(query).select('studentName mobile email');
+    if (!duplicateLead) return;
+
+    const duplicateBy = [];
+    if (normalizedMobile && normalizeMobile(duplicateLead.mobile || '') === normalizedMobile) {
+        duplicateBy.push('mobile number');
+    }
+    if (normalizedEmail && normalizeEmail(duplicateLead.email || '') === normalizedEmail) {
+        duplicateBy.push('email');
+    }
+
+    const duplicateFields = duplicateBy.length ? duplicateBy.join(' and ') : 'contact details';
+    const err = new Error(
+        `Duplicate lead found for the same ${duplicateFields}. Existing lead: ${duplicateLead.studentName || duplicateLead._id}`
+    );
+    err.statusCode = 409;
+    throw err;
+};
+
 // @desc    Get all leads (admin) or assigned leads (counsellor)
 // @route   GET /api/leads
 const getLeads = asyncHandler(async (req, res) => {
@@ -68,7 +113,17 @@ const getLeadById = asyncHandler(async (req, res) => {
 // @desc    Create lead
 // @route   POST /api/leads
 const createLead = asyncHandler(async (req, res) => {
+    await assertNoDuplicateLead({
+        mobile: req.body.mobile,
+        email: req.body.email,
+    });
+
     const leadData = { ...req.body, createdBy: req.user._id };
+    if (leadData.mobile) leadData.mobile = normalizeMobile(leadData.mobile);
+    if (leadData.alternateMobile) leadData.alternateMobile = normalizeMobile(leadData.alternateMobile);
+    if (leadData.whatsapp) leadData.whatsapp = normalizeMobile(leadData.whatsapp);
+    if (leadData.email) leadData.email = normalizeEmail(leadData.email);
+
     const lead = await Lead.create(leadData);
 
     // Create history entry
@@ -106,6 +161,20 @@ const updateLead = asyncHandler(async (req, res) => {
     }
 
     const { assignedTo, status, ...rest } = req.body;
+
+    const nextMobile = rest.mobile !== undefined ? rest.mobile : lead.mobile;
+    const nextEmail = rest.email !== undefined ? rest.email : lead.email;
+
+    await assertNoDuplicateLead({
+        mobile: nextMobile,
+        email: nextEmail,
+        excludeLeadId: lead._id,
+    });
+
+    if (rest.mobile !== undefined) rest.mobile = normalizeMobile(rest.mobile);
+    if (rest.alternateMobile !== undefined) rest.alternateMobile = normalizeMobile(rest.alternateMobile);
+    if (rest.whatsapp !== undefined) rest.whatsapp = normalizeMobile(rest.whatsapp);
+    if (rest.email !== undefined) rest.email = normalizeEmail(rest.email);
 
     // Track reassignment
     if (

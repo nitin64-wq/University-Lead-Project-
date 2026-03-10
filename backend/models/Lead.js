@@ -16,9 +16,9 @@ const leadSchema = new mongoose.Schema(
         pinCode: { type: String },
 
         // Contact Details
-        mobile: { type: String, required: true },
+        mobile: { type: String, required: true, unique: true },
         alternateMobile: { type: String },
-        email: { type: String, lowercase: true },
+        email: { type: String, lowercase: true, unique: true, sparse: true },
         whatsapp: { type: String },
 
         // Academic Details
