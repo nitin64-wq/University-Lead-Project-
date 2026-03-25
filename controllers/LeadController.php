@@ -76,6 +76,11 @@ class LeadController {
             flash('Please select a file.', 'danger');
             redirect('/leads/import');
         }
+        $excelCreatedBy = trim($_POST['excel_created_by'] ?? '');
+        if (empty($excelCreatedBy)) {
+            flash('Please enter the Excel File Created By Person.', 'danger');
+            redirect('/leads/import');
+        }
         $file    = $_FILES['excel_file'];
         $ext     = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         if (!in_array($ext, ['xlsx','xls','csv'])) {
@@ -108,27 +113,25 @@ class LeadController {
 
         // Build header map
         $headers = array_map(fn($h) => strtolower(trim((string)$h)), array_shift($rows));
+        
+        $requiredHeaders = ['sr. no', 'student name', 'father name', 'contact number (student)', 'contact number (parents)', 'stream', 'reserve for future', 'category', 'school name', 'name of team'];
+        
+        $missingHeaders = array_diff($requiredHeaders, $headers);
+        if (!empty($missingHeaders)) {
+            flash('Invalid Excel format. Missing columns: ' . implode(', ', array_map('ucwords', $missingHeaders)), 'danger');
+            redirect('/leads/import');
+        }
+
         $colMap = [
-            'student_name'      => ['student name','student_name','name'],
-            'father_name'       => ['father name','father_name','father'],
-            'student_contact'   => ['student contact','student_contact','contact'],
-            'parent_contact'    => ['parent contact','parent_contact'],
+            'student_name'      => ['student name'],
+            'father_name'       => ['father name'],
+            'student_contact'   => ['contact number (student)'],
+            'parent_contact'    => ['contact number (parents)'],
             'stream'            => ['stream'],
             'category'          => ['category'],
-            'school_name'       => ['school name','school_name','school'],
-            'district'          => ['district'],
-            'village'           => ['village'],
-            'course_interested' => ['course interested','course_interested','course'],
-            'telecaller_name'   => ['telecaller name','telecaller_name','telecaller'],
-            'call_duration'     => ['call duration','call_duration'],
-            'call_type'         => ['call type','call_type'],
-            'availability_date' => ['availability date','availability_date'],
-            'lead_status'       => ['lead status','lead_status','status'],
-            'temperature'       => ['temperature','temp','warm / hot / cold','warm/hot/cold'],
-            'warm_level'        => ['warm level','warm_level'],
-            'next_follow_up'    => ['next follow up','next_follow_up','follow up date'],
-            'remarks'           => ['remarks','remark','comment'],
-            'admission_status'  => ['admission status','admission_status'],
+            'school_name'       => ['school name'],
+            'remarks'           => ['reserve for future'],
+            'team_name'         => ['name of team'],
         ];
 
         // Map header index → field name
@@ -157,19 +160,8 @@ class LeadController {
                     'stream'            => $get('stream'),
                     'category'          => $get('category'),
                     'school_name'       => $get('school_name'),
-                    'district'          => $get('district'),
-                    'village'           => $get('village'),
-                    'course_interested' => $get('course_interested'),
-                    'telecaller_name'   => $get('telecaller_name'),
-                    'call_duration'     => $get('call_duration'),
-                    'call_type'         => $get('call_type') ?: 'Fresh',
-                    'availability_date' => $get('availability_date'),
-                    'lead_status'       => $get('lead_status') ?: 'New',
-                    'temperature'       => $get('temperature') ?: 'Cold',
-                    'warm_level'        => $get('warm_level'),
-                    'next_follow_up'    => $get('next_follow_up'),
                     'remarks'           => $get('remarks'),
-                    'admission_status'  => $get('admission_status') ?: 'Pending',
+                    'excel_created_by'  => $excelCreatedBy,
                 ]);
                 $imported++;
             } catch (Exception $e) { $errors++; }

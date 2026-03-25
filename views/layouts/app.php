@@ -37,12 +37,14 @@
             <a href="<?= BASE_URL ?>/leads"        class="sidebar-link <?= ($title??'')==='Leads List'          ?'active':'' ?>"><i class="fas fa-list-alt"></i><span>Leads List</span></a>
             
             <?php if (isset($_SESSION['admin_id'])): ?>
-            <div class="sidebar-nav-title">TEAM</div>
-            <a href="<?= BASE_URL ?>/teams"        class="sidebar-link <?= str_contains($title??'','Team')      ?'active':'' ?>"><i class="fas fa-users-cog"></i><span>Teams</span></a>
-            <a href="<?= BASE_URL ?>/members"      class="sidebar-link <?= str_contains($title??'','Member')    ?'active':'' ?>"><i class="fas fa-user-friends"></i><span>Members</span></a>
+            <div class="sidebar-nav-title">USERS</div>
+            <a href="<?= BASE_URL ?>/members"      class="sidebar-link <?= str_contains($title??'','Member')    ?'active':'' ?>"><i class="fas fa-headset"></i><span>Telecallers</span></a>
             <div class="sidebar-nav-title">OPERATIONS</div>
             <a href="<?= BASE_URL ?>/assignment"   class="sidebar-link <?= str_contains($title??'','Assignment')?'active':'' ?>"><i class="fas fa-tasks"></i><span>Lead Assignment</span></a>
             <a href="<?= BASE_URL ?>/analytics"    class="sidebar-link <?= str_contains($title??'','Analytics') ?'active':'' ?>"><i class="fas fa-chart-bar"></i><span>Analytics</span></a>
+            <div class="sidebar-nav-title">REPORTS</div>
+            <a href="<?= BASE_URL ?>/reports/hot-warm" class="sidebar-link <?= str_contains($title??'','HOT') ?'active':'' ?>"><i class="fas fa-fire"></i><span>HOT &amp; WARM</span></a>
+            <a href="<?= BASE_URL ?>/reports/daily"    class="sidebar-link <?= str_contains($title??'','Daily') ?'active':'' ?>"><i class="fas fa-phone-volume"></i><span>Daily Calling</span></a>
             <?php endif; ?>
         </nav>
         <div class="sidebar-footer">

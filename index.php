@@ -74,9 +74,16 @@ match(true) {
     // ── Admin Dashboard ──────────────────────────────
     ($r0 === 'dashboard')                => (new DashboardController())->index(),
 
+    // ── Admin Reports ────────────────────────────────
+    ($r0 === 'reports' && $r1 === 'hot-warm') => (new ReportController())->hotWarm(),
+    ($r0 === 'reports' && $r1 === 'daily')    => (new ReportController())->daily(),
+
     // ── Telecaller Routes (tc/) ──────────────────────
     ($r0 === 'tc' && $r1 === 'dashboard')                                     => (new TelecallerController())->dashboard(),
-    ($r0 === 'tc' && $r1 === 'leads' && is_numeric($r2) && $segments[3]==='call' && $method === 'POST') => (new TelecallerController())->logCall((int)$r2),
+    ($r0 === 'tc' && $r1 === 'leads' && is_numeric($r2) && isset($segments[3]) && $segments[3]==='call' && $method === 'POST')         => (new TelecallerController())->logCall((int)$r2),
+    ($r0 === 'tc' && $r1 === 'leads' && is_numeric($r2) && isset($segments[3]) && $segments[3]==='quick-update' && $method === 'POST') => (new TelecallerController())->quickUpdate((int)$r2),
+    ($r0 === 'tc' && $r1 === 'leads' && is_numeric($r2) && isset($segments[3]) && $segments[3]==='edit' && $method === 'POST')         => (new TelecallerController())->saveLead((int)$r2),
+    ($r0 === 'tc' && $r1 === 'leads' && is_numeric($r2) && isset($segments[3]) && $segments[3]==='edit')                              => (new TelecallerController())->editLead((int)$r2),
     ($r0 === 'tc' && $r1 === 'leads' && is_numeric($r2))                      => (new TelecallerController())->leadDetail((int)$r2),
     ($r0 === 'tc' && $r1 === 'leads')                                         => (new TelecallerController())->leads(),
     ($r0 === 'tc' && $r1 === 'followups')                                     => (new TelecallerController())->followups(),

@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS leads (
     next_follow_up    DATE,
     remarks           TEXT,
     admission_status  ENUM('Pending','Done','Cancelled') DEFAULT 'Pending',
+    excel_created_by  VARCHAR(255) NULL,
     assigned_team_id  INT UNSIGNED,
     created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

@@ -9,7 +9,7 @@ class LeadModel {
         $cs = db()->prepare($countSql); $cs->execute($params);
         $total = (int)$cs->fetchColumn();
 
-        $sql = "SELECT l.*, t.name as team_name FROM leads l LEFT JOIN teams t ON t.id=l.assigned_team_id";
+        $sql = "SELECT l.*, t.name as team_name, m.name as member_name FROM leads l LEFT JOIN teams t ON t.id=l.assigned_team_id LEFT JOIN members m ON m.id=l.assigned_member_id";
         if ($where) $sql .= " WHERE $where";
         $sql .= " ORDER BY l.id DESC LIMIT $perPage OFFSET $offset";
         $s = db()->prepare($sql); $s->execute($params);
@@ -18,11 +18,33 @@ class LeadModel {
 
     public static function all(array $filters = []): array {
         [$where, $params] = self::buildWhere($filters);
-        $sql = "SELECT l.*, t.name as team_name FROM leads l LEFT JOIN teams t ON t.id=l.assigned_team_id";
+        $sql = "SELECT l.*, t.name as team_name, m.name as member_name FROM leads l LEFT JOIN teams t ON t.id=l.assigned_team_id LEFT JOIN members m ON m.id=l.assigned_member_id";
         if ($where) $sql .= " WHERE $where";
         $sql .= " ORDER BY l.id DESC";
         $s = db()->prepare($sql); $s->execute($params);
         return $s->fetchAll();
+    }
+
+    /**
+     * Returns the next lead ID (after $currentId) assigned to this member/team,
+     * ordered ascending by id so the telecaller works through the list top-to-bottom.
+     */
+    public static function nextId(int $currentId, int $memberId, ?int $teamId): ?int {
+        if ($teamId) {
+            $sql = "SELECT id FROM leads
+                    WHERE id > ? AND (assigned_member_id = ? OR assigned_team_id = ?)
+                    ORDER BY id ASC LIMIT 1";
+            $s = db()->prepare($sql);
+            $s->execute([$currentId, $memberId, $teamId]);
+        } else {
+            $sql = "SELECT id FROM leads
+                    WHERE id > ? AND assigned_member_id = ?
+                    ORDER BY id ASC LIMIT 1";
+            $s = db()->prepare($sql);
+            $s->execute([$currentId, $memberId]);
+        }
+        $row = $s->fetch();
+        return $row ? (int)$row['id'] : null;
     }
 
     private static function buildWhere(array $f): array {
@@ -119,8 +141,8 @@ class LeadModel {
     }
 
     public static function create(array $d): int {
-        $sql = "INSERT INTO leads (student_name,father_name,student_contact,parent_contact,stream,category,school_name,district,village,course_interested,telecaller_name,call_duration,call_type,availability_date,lead_status,temperature,warm_level,next_follow_up,remarks,admission_status)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        $sql = "INSERT INTO leads (student_name,father_name,student_contact,parent_contact,stream,category,school_name,district,village,course_interested,telecaller_name,call_duration,call_type,availability_date,lead_status,temperature,warm_level,next_follow_up,remarks,admission_status,excel_created_by)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         $s = db()->prepare($sql);
         $s->execute([
             $d['student_name'], $d['father_name'] ?? '', $d['student_contact'] ?? '', $d['parent_contact'] ?? '',
@@ -130,13 +152,13 @@ class LeadModel {
             self::parseDate($d['availability_date'] ?? ''),
             $d['lead_status'] ?? 'New', $d['temperature'] ?? 'Cold', $d['warm_level'] ?? '',
             self::parseDate($d['next_follow_up'] ?? ''),
-            $d['remarks'] ?? '', $d['admission_status'] ?? 'Pending'
+            $d['remarks'] ?? '', $d['admission_status'] ?? 'Pending', $d['excel_created_by'] ?? null
         ]);
         return (int)db()->lastInsertId();
     }
 
     public static function update(int $id, array $d): void {
-        $sql = "UPDATE leads SET student_name=?,father_name=?,student_contact=?,parent_contact=?,stream=?,category=?,school_name=?,district=?,village=?,course_interested=?,telecaller_name=?,call_duration=?,call_type=?,availability_date=?,lead_status=?,temperature=?,warm_level=?,next_follow_up=?,remarks=?,admission_status=? WHERE id=?";
+        $sql = "UPDATE leads SET student_name=?,father_name=?,student_contact=?,parent_contact=?,stream=?,category=?,school_name=?,district=?,village=?,course_interested=?,telecaller_name=?,call_duration=?,call_type=?,availability_date=?,lead_status=?,temperature=?,warm_level=?,next_follow_up=?,remarks=?,admission_status=?,excel_created_by=? WHERE id=?";
         db()->prepare($sql)->execute([
             $d['student_name'], $d['father_name'] ?? '', $d['student_contact'] ?? '', $d['parent_contact'] ?? '',
             $d['stream'] ?? '', $d['category'] ?? '', $d['school_name'] ?? '', $d['district'] ?? '',
@@ -145,7 +167,7 @@ class LeadModel {
             self::parseDate($d['availability_date'] ?? ''),
             $d['lead_status'] ?? 'New', $d['temperature'] ?? 'Cold', $d['warm_level'] ?? '',
             self::parseDate($d['next_follow_up'] ?? ''),
-            $d['remarks'] ?? '', $d['admission_status'] ?? 'Pending', $id
+            $d['remarks'] ?? '', $d['admission_status'] ?? 'Pending', $d['excel_created_by'] ?? null, $id
         ]);
     }
 
@@ -187,11 +209,16 @@ class LeadModel {
         return $count;
     }
 
-    public static function assignBySchool(string $school, int $teamId, int $adminId): int {
+    public static function assignBySchool(string $school, int $memberId, int $adminId): int {
         $s = db()->prepare("SELECT id FROM leads WHERE school_name=?");
         $s->execute([$school]);
         $ids = array_column($s->fetchAll(), 'id');
-        return empty($ids) ? 0 : self::assignTeam($ids, $teamId, $adminId);
+        return empty($ids) ? 0 : self::assignMember($ids, $memberId, $adminId);
+    }
+
+    /** Update a single safe column on a lead row */
+    public static function patchField(int $id, string $field, mixed $value): void {
+        db()->prepare("UPDATE leads SET `$field`=? WHERE id=?")->execute([$value, $id]);
     }
 
     public static function isDuplicate(string $name, string $contact): bool {

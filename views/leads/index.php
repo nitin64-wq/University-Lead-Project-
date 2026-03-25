@@ -62,16 +62,17 @@
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
-                <thead><tr><th>#</th><th>Student</th><th>School</th><th>District</th><th>Contact</th><th>Course</th><th>Temp</th><th>Status</th><th>Team</th><th>Actions</th></tr></thead>
+                <thead><tr><th>#</th><th>Student</th><th>School</th><th>District</th><th>Created By</th><th>Contact</th><th>Course</th><th>Temp</th><th>Status</th><th>Team</th><th>Actions</th></tr></thead>
                 <tbody>
                 <?php if (empty($r['data'])): ?>
-                <tr><td colspan="10"><div class="empty-state"><i class="fas fa-inbox"></i><h6>No leads found</h6><p>Try adjusting filters or import new leads.</p></div></td></tr>
+                <tr><td colspan="11"><div class="empty-state"><i class="fas fa-inbox"></i><h6>No leads found</h6><p>Try adjusting filters or import new leads.</p></div></td></tr>
                 <?php else: foreach ($r['data'] as $l): ?>
                 <tr>
                     <td class="text-muted small"><?= $l['id'] ?></td>
                     <td><strong><?= e($l['student_name']) ?></strong><br><small class="text-muted"><?= e($l['father_name']) ?></small></td>
                     <td><?= e($l['school_name']) ?></td>
                     <td><?= e($l['district']) ?></td>
+                    <td><span class="badge bg-secondary"><?= e($l['excel_created_by'] ?: 'Manual') ?></span></td>
                     <td><?= e($l['student_contact']) ?></td>
                     <td><?= e($l['course_interested']) ?></td>
                     <td><span class="badge-<?= strtolower($l['temperature']) ?>"><?= e($l['temperature']) ?></span></td>

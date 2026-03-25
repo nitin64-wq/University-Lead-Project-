@@ -26,6 +26,10 @@
                             <button type="button" class="btn btn-sm btn-outline-danger ms-auto" onclick="clearFile()"><i class="fas fa-times"></i></button>
                         </div>
                     </div>
+                    <div class="mt-3">
+                        <label class="form-label text-muted">Excel File Created By Person</label>
+                        <input type="text" name="excel_created_by" class="form-control" placeholder="Enter person name..." required>
+                    </div>
                     <button type="submit" id="importBtn" class="btn btn-success btn-lg w-100 mt-3 d-none">
                         <i class="fas fa-file-import me-2"></i>Import Leads
                     </button>
@@ -49,7 +53,7 @@
             <div class="card-header"><h6><i class="fas fa-info-circle me-2"></i>Required Columns</h6></div>
             <div class="card-body">
                 <ul class="guide-list">
-                    <?php foreach (['Student Name','Father Name','Student Contact','Parent Contact','Stream','Category','School Name','District','Village','Course Interested','Telecaller Name','Call Duration','Call Type','Availability Date','Lead Status','Temperature','Warm Level','Next Follow Up','Remarks','Admission Status'] as $col): ?>
+                    <?php foreach (['Sr. No','Student Name','Father Name','Contact Number (Student)','Contact Number (Parents)','Stream','Reserve for Future','Category','School Name','Name of Team'] as $col): ?>
                     <li><i class="fas fa-check text-success"></i> <?= $col ?></li>
                     <?php endforeach; ?>
                 </ul>

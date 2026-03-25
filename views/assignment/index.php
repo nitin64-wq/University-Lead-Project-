@@ -47,10 +47,10 @@
                 
                 <form method="POST" action="<?= BASE_URL ?>/assignment/assign" id="assignForm">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Assign to Team</label>
-                        <select name="team_id" class="form-select" required>
-                            <option value="">Select Team</option>
-                            <?php foreach ($teams as $t): ?><option value="<?= $t['id'] ?>"><?= e($t['name']) ?></option><?php endforeach; ?>
+                        <label class="form-label fw-semibold">Assign to Telecaller</label>
+                        <select name="member_id" class="form-select" required>
+                            <option value="">Select Telecaller</option>
+                            <?php foreach ($members as $m): ?><option value="<?= $m['id'] ?>"><?= e($m['name']) ?></option><?php endforeach; ?>
                         </select>
                     </div>
                     <!-- Hidden container for selected lead IDs -->
@@ -75,13 +75,13 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Assign to Team</label>
-                        <select name="team_id" class="form-select" required>
-                            <option value="">Select Team</option>
-                            <?php foreach ($teams as $t): ?><option value="<?= $t['id'] ?>"><?= e($t['name']) ?></option><?php endforeach; ?>
+                        <label class="form-label fw-semibold">Assign to Telecaller</label>
+                        <select name="member_id" class="form-select" required>
+                            <option value="">Select Telecaller</option>
+                            <?php foreach ($members as $m): ?><option value="<?= $m['id'] ?>"><?= e($m['name']) ?></option><?php endforeach; ?>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-success w-100" onclick="return confirm('Assign all leads from this school to the selected team?')">
+                    <button type="submit" class="btn btn-success w-100" onclick="return confirm('Assign all leads from this school to the selected telecaller?')">
                         <i class="fas fa-bolt me-2"></i>Assign All School Leads
                     </button>
                 </form>
@@ -105,7 +105,7 @@
                         <thead class="sticky-top bg-white">
                             <tr>
                                 <th><input type="checkbox" id="selectAllCheckbox" onchange="selectAll(this.checked)"></th>
-                                <th>Student</th><th>School</th><th>District</th><th>Course</th><th>Status</th><th>Team</th>
+                                <th>Student</th><th>School</th><th>District</th><th>Course</th><th>Status</th><th>Telecaller</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -117,7 +117,7 @@
                             <td><?= e($l['district']) ?></td>
                             <td><?= e($l['course_interested']) ?></td>
                             <td><span class="badge-status badge-<?= strtolower(str_replace(' ','',$l['lead_status'])) ?>"><?= e($l['lead_status']) ?></span></td>
-                            <td><?= $l['team_name'] ? '<span class="badge bg-primary">'.e($l['team_name']).'</span>' : '<span class="text-muted">Unassigned</span>' ?></td>
+                            <td><?= $l['member_name'] ? '<span class="badge bg-primary">'.e($l['member_name']).'</span>' : '<span class="text-muted">Unassigned</span>' ?></td>
                         </tr>
                         <?php endforeach; if(empty($leads)): ?>
                         <tr><td colspan="7"><div class="empty-state">No leads match filters</div></td></tr>

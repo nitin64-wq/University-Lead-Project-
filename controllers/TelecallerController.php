@@ -57,7 +57,7 @@ class TelecallerController {
             'district' => $_GET['district'] ?? '',
         ]);
         $page      = max(1, (int)($_GET['page'] ?? 1));
-        $result    = LeadModel::paginate($filters, $page);
+        $result    = LeadModel::paginate($filters, $page, 50);
         $courses   = LeadModel::distinctValues('course_interested');
         $districts = LeadModel::distinctValues('district');
         $unreadCount = NotificationModel::countUnread($mid);
@@ -134,6 +134,120 @@ class TelecallerController {
 
         flash('Call logged successfully! 📞', 'success');
         redirect('/tc/leads/' . $leadId);
+    }
+
+    // ── Quick Inline Update (AJAX) ───────────────────────────
+    public function quickUpdate(int $leadId): void {
+        $mid  = $this->memberId();
+        $tid  = $this->teamId();
+        $lead = LeadModel::find($leadId);
+
+        $teamMatch   = $tid && (int)($lead['assigned_team_id'] ?? 0) === $tid;
+        $memberMatch = (int)($lead['assigned_member_id'] ?? 0) === $mid;
+
+        if (!$lead || (!$teamMatch && !$memberMatch)) {
+            http_response_code(403);
+            echo json_encode(['ok' => false, 'msg' => 'Access denied']);
+            exit;
+        }
+
+        $allowed = [
+            // Lead status fields
+            'temperature','warm_case','warm_level','cold_reason','no_pursue_reason',
+            'availability_date','course_interested','next_follow_up','lead_status','remarks',
+            // Not-communicated & call info fields
+            'not_communicated_reason','call_duration','call_type',
+            // Student info fields (corrections)
+            'student_name','father_name','student_contact','parent_contact',
+            'school_name','district','village','stream','category',
+        ];
+        $field = $_POST['field'] ?? '';
+        $value = $_POST['value'] ?? '';
+
+        if (!in_array($field, $allowed)) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'msg' => 'Invalid field']);
+            exit;
+        }
+
+        // Date fields: parse safely
+        if (in_array($field, ['availability_date','next_follow_up'])) {
+            $value = $value ? (date('Y-m-d', strtotime($value)) ?: null) : null;
+        }
+
+        LeadModel::patchField($leadId, $field, $value);
+
+        // Also update last_call_date so the daily reports pick up this activity
+        db()->prepare("UPDATE leads SET last_call_date=NOW() WHERE id=?")->execute([$leadId]);
+
+        echo json_encode(['ok' => true]);
+        exit;
+    }
+
+    // ── Full-Page Lead Edit (GET) ────────────────────────────
+    public function editLead(int $id): void {
+        $mid  = $this->memberId();
+        $tid  = $this->teamId();
+        $lead = LeadModel::find($id);
+
+        $teamMatch   = $tid && (int)($lead['assigned_team_id'] ?? 0) === $tid;
+        $memberMatch = (int)($lead['assigned_member_id'] ?? 0) === $mid;
+
+        if (!$lead || (!$teamMatch && !$memberMatch)) {
+            flash('Lead not found or not assigned to you.', 'danger');
+            redirect('/tc/leads');
+        }
+
+        $unreadCount = NotificationModel::countUnread($mid);
+        $nextId      = LeadModel::nextId($id, $mid, $tid);
+        render('telecaller/lead_edit', compact('lead','unreadCount','nextId') + ['title' => 'Edit Lead']);
+    }
+
+    // ── Full-Page Lead Save (POST) ───────────────────────────
+    public function saveLead(int $id): void {
+        $mid  = $this->memberId();
+        $tid  = $this->teamId();
+        $lead = LeadModel::find($id);
+
+        $teamMatch   = $tid && (int)($lead['assigned_team_id'] ?? 0) === $tid;
+        $memberMatch = (int)($lead['assigned_member_id'] ?? 0) === $mid;
+
+        if (!$lead || (!$teamMatch && !$memberMatch)) {
+            flash('Access denied.', 'danger');
+            redirect('/tc/leads');
+        }
+
+        $allowed = [
+            'temperature','warm_case','warm_level','cold_reason','no_pursue_reason',
+            'not_communicated_reason','availability_date','course_interested',
+            'next_follow_up','lead_status','remarks','call_duration','call_type',
+            'student_name','father_name','student_contact','parent_contact',
+            'school_name','district','village','stream','category',
+        ];
+
+        foreach ($allowed as $field) {
+            if (isset($_POST[$field])) {
+                $value = trim($_POST[$field]);
+                if (in_array($field, ['availability_date','next_follow_up'])) {
+                    $value = $value ? (date('Y-m-d', strtotime($value)) ?: null) : null;
+                }
+                LeadModel::patchField($id, $field, $value);
+            }
+        }
+
+        // Record the fact that a call/update was made today
+        db()->prepare("UPDATE leads SET last_call_date=NOW() WHERE id=?")->execute([$id]);
+
+        flash('Lead updated successfully! ✅', 'success');
+
+        // Redirect to next student, or back to list if this was the last one
+        $nextId = LeadModel::nextId($id, $mid, $tid);
+        if ($nextId) {
+            redirect('/tc/leads/' . $nextId . '/edit');
+        } else {
+            flash('🎉 All leads reviewed! Returning to list.', 'info');
+            redirect('/tc/leads');
+        }
     }
 
     // ── Mark Notifications Read ──────────────────────────────

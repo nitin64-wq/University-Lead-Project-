@@ -60,6 +60,9 @@
                     <div class="lead-detail-item"><label>Assigned Member</label>
                         <span><?= $lead['assigned_member_id'] ? e((MemberModel::find($lead['assigned_member_id']))['name'] ?? 'Unknown Member') : '<em class="text-muted">Unassigned</em>' ?></span>
                     </div>
+                    <div class="lead-detail-item"><label>Source / Created By</label>
+                        <span><span class="badge bg-secondary"><?= e($lead['excel_created_by'] ?: 'Manual') ?></span></span>
+                    </div>
                 </div>
 
                 <?php if ($lead['remarks']): ?>
