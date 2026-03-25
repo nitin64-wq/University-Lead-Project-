@@ -1,0 +1,9 @@
+RewriteEngine On
+RewriteBase /frontend-tech-stack-constraints/
+
+# Skip real files/directories
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Route everything through index.php
+RewriteRule ^(.*)$ index.php?route=$1 [QSA,L]
