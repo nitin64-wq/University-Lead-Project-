@@ -28,11 +28,27 @@ class AssignmentController {
 
     public function assignBySchool(): void {
         requireAuth();
-        $school = trim($_POST['school'] ?? '');
+        $schools = $_POST['schools'] ?? [];
+        if (!is_array($schools) && !empty($_POST['school'])) {
+            $schools = [trim($_POST['school'])];
+        }
+        $schools = array_filter(array_map('trim', $schools));
+        
         $memberId = (int)($_POST['member_id'] ?? 0);
-        if (!$school || !$memberId) { flash('Select school and telecaller.', 'warning'); redirect('/assignment'); return; }
-        $count = LeadModel::assignBySchool($school, $memberId, $_SESSION['admin_id']);
-        flash("$count leads from \"$school\" assigned.", 'success');
+        
+        if (empty($schools) || !$memberId) { 
+            flash('Select at least one school and a telecaller.', 'warning'); 
+            redirect('/assignment'); 
+            return; 
+        }
+        
+        $totalCount = 0;
+        foreach ($schools as $school) {
+            $totalCount += LeadModel::assignBySchool($school, $memberId, $_SESSION['admin_id']);
+        }
+        
+        $schoolCount = count($schools);
+        flash("$totalCount leads from $schoolCount school(s) assigned successfully.", 'success');
         redirect('/assignment');
     }
 }

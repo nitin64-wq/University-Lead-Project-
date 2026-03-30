@@ -83,7 +83,7 @@
                         <td>
                             <?php if ($hasLead): ?>
                                 <?php
-                                $cls = $r['temperature'] === 'HOT' ? 'text-danger fw-bold' : 'text-warning fw-bold';
+                                $cls = strtoupper($r['temperature'] ?? '') === 'HOT' ? 'text-danger fw-bold' : 'text-warning fw-bold';
                                 echo "<span class='$cls'>" . e($r['temperature']) . "</span>";
                                 ?>
                             <?php else: ?>

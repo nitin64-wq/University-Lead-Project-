@@ -19,7 +19,7 @@ class ReportController {
         $sql = "SELECT m.name AS caller_name, l.*
                 FROM members m
                 LEFT JOIN leads l ON m.id = l.assigned_member_id 
-                                  AND l.temperature IN ('HOT','Warm')
+                                  AND LOWER(l.temperature) IN ('hot','warm')
                                   AND DATE(l.last_call_date) = ?
                 ORDER BY m.name, l.id";
         $s = db()->prepare($sql);
@@ -38,13 +38,13 @@ class ReportController {
         $sql = "SELECT
                     m.name   AS caller_name,
                     ? AS call_date,
-                    SUM(CASE WHEN l.temperature='HOT'              THEN 1 ELSE 0 END) AS hot_calls,
-                    SUM(CASE WHEN l.temperature='Warm'             THEN 1 ELSE 0 END) AS warm_calls,
-                    SUM(CASE WHEN l.temperature='Cold'             THEN 1 ELSE 0 END) AS cold_calls,
-                    SUM(CASE WHEN l.temperature='Not Communicated' THEN 1 ELSE 0 END) AS nc_calls,
-                    SUM(CASE WHEN l.lead_status='Converted'        THEN 1 ELSE 0 END) AS admissions,
+                    SUM(CASE WHEN LOWER(l.temperature)='hot'              THEN 1 ELSE 0 END) AS hot_calls,
+                    SUM(CASE WHEN LOWER(l.temperature)='warm'             THEN 1 ELSE 0 END) AS warm_calls,
+                    SUM(CASE WHEN LOWER(l.temperature)='cold'             THEN 1 ELSE 0 END) AS cold_calls,
+                    SUM(CASE WHEN LOWER(l.temperature)='not communicated' THEN 1 ELSE 0 END) AS nc_calls,
+                    SUM(CASE WHEN LOWER(l.lead_status)='converted'        THEN 1 ELSE 0 END) AS admissions,
                     COUNT(l.id)                                                        AS total_calls,
-                    SUM(CASE WHEN l.temperature IN ('HOT','Warm','Cold') THEN 1 ELSE 0 END) AS effective_calls,
+                    SUM(CASE WHEN LOWER(l.temperature) IN ('hot','warm','cold') THEN 1 ELSE 0 END) AS effective_calls,
                     SUM(COALESCE(l.call_duration, 0))                                  AS total_minutes
                 FROM members m
                 LEFT JOIN leads l ON m.id = l.assigned_member_id AND DATE(l.last_call_date) = ?

@@ -68,11 +68,11 @@
             <div class="card-body">
                 <form method="POST" action="<?= BASE_URL ?>/assignment/assign-by-school">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Select School</label>
-                        <select name="school" class="form-select" required>
-                            <option value="">Select School</option>
+                        <label class="form-label fw-semibold">Select School(s)</label>
+                        <select name="schools[]" class="form-select" multiple required style="min-height: 140px;">
                             <?php foreach ($schools as $s): ?><option value="<?= e($s) ?>"><?= e($s) ?></option><?php endforeach; ?>
                         </select>
+                        <div class="form-text mt-1" style="font-size: 11px;">Hold CTRL/CMD to select multiple schools.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Assign to Telecaller</label>
@@ -81,7 +81,7 @@
                             <?php foreach ($members as $m): ?><option value="<?= $m['id'] ?>"><?= e($m['name']) ?></option><?php endforeach; ?>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-success w-100" onclick="return confirm('Assign all leads from this school to the selected telecaller?')">
+                    <button type="submit" class="btn btn-success w-100" onclick="return confirm('Assign all leads from the selected schools to this telecaller?')">
                         <i class="fas fa-bolt me-2"></i>Assign All School Leads
                     </button>
                 </form>

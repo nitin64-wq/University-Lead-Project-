@@ -176,7 +176,7 @@ class LeadModel {
         $sql = "UPDATE leads SET
             call_duration=?, call_type=?, lead_status=?,
             temperature=?, warm_level=?, next_follow_up=?,
-            remarks=?, admission_status=?, last_call_date=?
+            remarks=?, admission_status=?, last_call_date=?, assigned_member_id=?
             WHERE id=?";
         db()->prepare($sql)->execute([
             $d['call_duration']   ?? '',
@@ -188,6 +188,7 @@ class LeadModel {
             $d['remarks']         ?? '',
             $d['admission_status']?? 'Pending',
             $d['last_call_date']  ?? date('Y-m-d'),
+            $d['telecaller_id']   ?? null,
             $id
         ]);
     }

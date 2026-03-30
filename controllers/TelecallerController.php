@@ -178,7 +178,7 @@ class TelecallerController {
         LeadModel::patchField($leadId, $field, $value);
 
         // Also update last_call_date so the daily reports pick up this activity
-        db()->prepare("UPDATE leads SET last_call_date=NOW() WHERE id=?")->execute([$leadId]);
+        db()->prepare("UPDATE leads SET last_call_date=NOW(), assigned_member_id=? WHERE id=?")->execute([$mid, $leadId]);
 
         echo json_encode(['ok' => true]);
         exit;
@@ -236,7 +236,7 @@ class TelecallerController {
         }
 
         // Record the fact that a call/update was made today
-        db()->prepare("UPDATE leads SET last_call_date=NOW() WHERE id=?")->execute([$id]);
+        db()->prepare("UPDATE leads SET last_call_date=NOW(), assigned_member_id=? WHERE id=?")->execute([$mid, $id]);
 
         flash('Lead updated successfully! ✅', 'success');
 
